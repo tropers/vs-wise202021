@@ -5,16 +5,19 @@ import java.io.ObjectOutputStream
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.*
+import java.util.concurrent.BlockingDeque
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingDeque
 import kotlin.collections.HashMap
 
 class Skeleton(private var port: Int): Runnable {
     private var running = true
-    private var requestQueue: Queue<Socket> = LinkedList<Socket>()
+    private var requestQueue: BlockingQueue<Socket> = LinkedBlockingDeque<Socket>()
     private var services: MutableMap<String, Service> = mutableMapOf<String, Service>()
 
     private fun handleRequests() {
         while (true) {
-            val socket: Socket = requestQueue.poll() ?: continue
+            val socket: Socket = requestQueue.take() // Get most recent socket
 
             val inputStream = ObjectInputStream(socket.getInputStream())
 

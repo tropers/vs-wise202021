@@ -29,7 +29,7 @@ class Skeleton(private var port: Int): Runnable {
     }
 
     fun registerService(id: String, serv: Service) {
-        services.put(id, serv)
+        services[id] = serv
     }
 
     override fun run() {
@@ -41,5 +41,4 @@ class Skeleton(private var port: Int): Runnable {
             val socket = server.accept()
         }
     }
-
 }

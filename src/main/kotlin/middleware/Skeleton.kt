@@ -13,7 +13,7 @@ import kotlin.collections.HashMap
 class Skeleton(private var port: Int): Runnable {
     private var running = true
     private var requestQueue: BlockingQueue<Socket> = LinkedBlockingDeque<Socket>()
-    private var services: MutableMap<String, Service> = mutableMapOf<String, Service>()
+    private var services: MutableMap<MessageType, Service> = mutableMapOf<MessageType, Service>()
 
     private fun handleRequests() {
         while (true) {
@@ -31,8 +31,8 @@ class Skeleton(private var port: Int): Runnable {
         }
     }
 
-    fun registerService(id: String, serv: Service) {
-        services[id] = serv
+    fun registerService(msgType: MessageType, serv: Service) {
+        services[msgType] = serv
     }
 
     override fun run() {

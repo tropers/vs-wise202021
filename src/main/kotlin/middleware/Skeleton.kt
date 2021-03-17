@@ -42,6 +42,7 @@ class Skeleton(private var port: Int): Runnable {
 
         while (running) {
             val socket = server.accept()
+            requestQueue.put(socket)
         }
     }
 }

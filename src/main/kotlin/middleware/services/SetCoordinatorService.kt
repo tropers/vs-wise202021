@@ -15,6 +15,6 @@ class SetCoordinatorService(private var robot: Robot): Service {
             error("SetCoordinator failed: Wrong type of message contents ${m.contents}")
         }
 
-        return Message(MessageType.SET_COORDINATOR_RESPONSE, "OK")
+        return Message(MessageType.COORDINATOR_RESPONSE, "OK")
     }
 }

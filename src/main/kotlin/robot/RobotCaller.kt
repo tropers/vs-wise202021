@@ -1,4 +1,4 @@
-package middleware
+package robot
 
 import lamport.Request
 import middleware.Message
@@ -22,8 +22,18 @@ class RobotCaller(
         return call(req)
     }
 
-    fun requestResource(): Message {
-       val req = Message(MessageType.REQUEST_RESOURCE, Request(robot.id, System.nanoTime()))
-       return call(req)
+    fun weldingCount(): Message {
+        val req = Message(MessageType.GET_WELDING_COUNT, 0)
+        return call(req)
     }
+
+    fun welding(): Message {
+        val req = Message(MessageType.WELDING, 0)
+        return call(req)
+    }
+
+//    fun requestResource(): Message {
+//       val req = Message(MessageType.REQUEST_RESOURCE, Request(robot.id, System.nanoTime()))
+//       return call(req)
+//    }
 }

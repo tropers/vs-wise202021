@@ -33,8 +33,8 @@ class RobotCaller(
     }
 
     fun weldingSuccessful(): Message {
-        val req = Message(MessageType.WELDING)
-
+        val req = Message(MessageType.WELDING_DONE, 0)
+        return call(req)
     }
 
 //    fun requestResource(): Message {

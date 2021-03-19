@@ -3,7 +3,6 @@ package robot.statemachine.states
 import middleware.Message
 import robot.statemachine.StateMachineContext
 import java.io.IOException
-import java.lang.Exception
 
 /**
  * StateElection implements the bully algorithm to determine

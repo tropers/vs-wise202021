@@ -10,18 +10,20 @@ class StateWelding(context: StateMachineContext): State {
     }
 
     private fun doWeld(context: StateMachineContext) {
-        Thread.sleep(1000) // TODO: make configuraable
+        Thread {
+            Thread.sleep(1000) // TODO: make configurable
 
-        if (Random.nextInt(0, 100) > 1) { // 99% chance
-            val ack = context.robot.robotCallers[context.robot.currentCoordinator?.id]?.weldingSuccessful()
-            if (ack?.type != MessageType.ACK){
-                context.currentState = StateError(context)
+            if (Random.nextInt(0, 100) > 1) { // 99% chance
+                val ack = context.robot.robotCallers[context.robot.currentCoordinator?.id]?.weldingSuccessful()
+                if (ack?.type != MessageType.ACK) {
+                    context.currentState = StateError(context)
+                } else {
+                    context.currentState = StateIdle(context)
+                }
             } else {
-                context.currentState = StateIdle(context)
+                context.currentState = StateError(context)
             }
-        } else {
-            context.currentState = StateError(context)
-        }
+        }.start()
     }
 
     override fun welding(context: StateMachineContext) {}

@@ -12,11 +12,36 @@ data class Request(var id: Int, var timestamp: Long)
 class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMutex {
     private var requestList: MutableList<Request> = mutableListOf()
     private val requestListLock = ReentrantLock()
+    // TODO: lock signal
 
     fun addRequest(req: Request) {
         requestListLock.withLock {
             requestList.add(req)
         }
+    }
+
+    private fun removeRequest(req: Request) {
+        requestListLock.withLock {
+            requestList.remove(req)
+        }
+    }
+
+    fun removeRequests(id: Int) {
+        for (r in requestList) {
+            if (r.id == id) {
+                removeRequest(r)
+            }
+        }
+    }
+
+    private fun checkTimestamps(timestamp: Long): Boolean {
+        for (r in requestList) {
+            if (timestamp < r.timestamp && r.id != id) {
+                return false
+            }
+        }
+
+        return true
     }
 
     override fun acquire(stubs: List<Stub>) {
@@ -39,6 +64,10 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
                 error("LamportMutex: Content of response $res is not Request type")
             }
         }
+
+        while(requestList[0].id != id && checkTimestamps(requestList[0].timestamp))
+            // TODO
+
     }
 
     override fun release(stubs: List<Stub>) {

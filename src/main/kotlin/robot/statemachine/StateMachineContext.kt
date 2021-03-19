@@ -9,6 +9,7 @@ const val WELDING_ROBOTS_AMOUNT = 2
 
 class StateMachineContext(var robot: Robot) {
     var currentState: State = StateInitial(this)
+
     // Used by coordinator to check if all robots have welded successfully
     // in current cycle
     var weldingCountDownLatch: CountDownLatch = CountDownLatch(WELDING_ROBOTS_AMOUNT)

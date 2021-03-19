@@ -6,4 +6,5 @@ interface State {
     fun welding(context: StateMachineContext)
     fun election(context: StateMachineContext)
     fun coordinator(context: StateMachineContext)
+    fun systemFailure(context: StateMachineContext)
 }

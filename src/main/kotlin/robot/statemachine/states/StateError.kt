@@ -8,4 +8,6 @@ class StateError(context: StateMachineContext): State {
     override fun election(context: StateMachineContext) {}
 
     override fun coordinator(context: StateMachineContext) {}
+
+    override fun systemFailure(context: StateMachineContext) {}
 }

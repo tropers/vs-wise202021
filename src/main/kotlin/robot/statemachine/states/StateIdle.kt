@@ -10,4 +10,8 @@ class StateIdle(context: StateMachineContext): State {
     override fun election(context: StateMachineContext) {}
 
     override fun coordinator(context: StateMachineContext) {}
+
+    override fun systemFailure(context: StateMachineContext) {
+        context.currentState = StateError(context)
+    }
 }

@@ -4,11 +4,8 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.ServerSocket
 import java.net.Socket
-import java.util.*
-import java.util.concurrent.BlockingDeque
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingDeque
-import kotlin.collections.HashMap
 
 class Skeleton(private var port: Int): Runnable {
     private var running = true

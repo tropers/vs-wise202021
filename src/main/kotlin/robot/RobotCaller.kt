@@ -1,10 +1,8 @@
 package robot
 
-import lamport.Request
 import middleware.Message
 import middleware.MessageType
 import middleware.Stub
-import robot.Robot
 
 class RobotCaller(
     uri: String,
@@ -37,8 +35,8 @@ class RobotCaller(
         return call(req)
     }
 
-//    fun requestResource(): Message {
-//       val req = Message(MessageType.REQUEST_RESOURCE, Request(robot.id, System.nanoTime()))
-//       return call(req)
-//    }
+    fun systemFailure(): Message {
+        val req = Message(MessageType.ERR, "system_failure")
+        return call(req)
+    }
 }

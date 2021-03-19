@@ -14,6 +14,7 @@ class StateElection(context: StateMachineContext): State {
     }
 
     private fun doElection(context: StateMachineContext) {
+        // Bully-Algorithm for electing the coordinator
         // Send election message to all higherups
         for ((k, v) in context.robot.participants) {
             if (context.robot.id < k) {
@@ -35,6 +36,8 @@ class StateElection(context: StateMachineContext): State {
         for ((k, v) in context.robot.robotCallers) {
             v.coordinator()
         }
+
+        context.currentState = StateCoordinator(context)
     }
 
     override fun welding(context: StateMachineContext) {}
@@ -42,4 +45,8 @@ class StateElection(context: StateMachineContext): State {
     override fun election(context: StateMachineContext) {}
 
     override fun coordinator(context: StateMachineContext) {}
+
+    override fun systemFailure(context: StateMachineContext) {
+        context.currentState = StateError(context)
+    }
 }

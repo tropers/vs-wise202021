@@ -32,6 +32,11 @@ class RobotCaller(
         return call(req)
     }
 
+    fun weldingSuccessful(): Message {
+        val req = Message(MessageType.WELDING)
+
+    }
+
 //    fun requestResource(): Message {
 //       val req = Message(MessageType.REQUEST_RESOURCE, Request(robot.id, System.nanoTime()))
 //       return call(req)

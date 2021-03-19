@@ -13,12 +13,10 @@ enum class MessageType {
     GET_WELDING_COUNT,
     GET_WELDING_COUNT_RESPONSE,
     WELDING,
+    WELDING_DONE,
     WELDING_RESPONSE,
-//    REQUEST_RESOURCE,
-//    REQUEST_RESOURCE_RESPONSE,
-}
-
-enum class Acknowledgement {
     ACK,
     ERR
+//    REQUEST_RESOURCE,
+//    REQUEST_RESOURCE_RESPONSE,
 }

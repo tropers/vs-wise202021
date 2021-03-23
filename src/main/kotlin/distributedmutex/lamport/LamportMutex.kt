@@ -43,7 +43,7 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
         requestListLock.withLock {
             for (r in requestList) {
                 if ((timestamp < r.timestamp && r.id != id) // If timestamps are equal, check IDs for ordering
-                    || (timestamp == r.timestamp && r.id < id)) { // If other process has higher id than self, weld first
+                    || (timestamp == r.timestamp && r.id < id)) { // If other process has lower id than self, weld first
                     return false
                 }
             }

@@ -40,7 +40,7 @@ class StateElection(context: StateMachineContext): State {
         context.currentState = StateCoordinator(context)
     }
 
-    override fun welding(context: StateMachineContext) {}
+    override fun welding(context: StateMachineContext, participants: List<Int>) {}
 
     override fun election(context: StateMachineContext) {}
 

@@ -1,6 +1,7 @@
 package robot.statemachine.states
 
 import middleware.Message
+import robot.Robot
 import robot.statemachine.StateMachineContext
 import java.util.concurrent.TimeUnit
 
@@ -25,13 +26,14 @@ class StateCoordinator(context: StateMachineContext): State {
         robots.sortedByDescending{context.robot.weldingCount}
 
         // Select robots with smallest welding count
-        val cycle = listOf(robots[0].second.id, robots[1].second.id)
+        // and add self to cycle
+        val cycle = listOf(context.robot.id, robots[0].second.id, robots[1].second.id)
         for ((_, v) in context.robot.robotCallers) {
-            v.welding()
+            v.welding(cycle)
         }
 
         if (context.weldingCountDownLatch.await(4, TimeUnit.SECONDS)) { // TODO: make configurable
-            context.currentState = StateCoordinatorWelding(context)
+            context.currentState = StateCoordinatorWelding(context, cycle)
         } else { // ERROR
             for ((k, v) in context.robot.robotCallers) {
                 v.systemFailure()
@@ -40,7 +42,7 @@ class StateCoordinator(context: StateMachineContext): State {
         }
     }
 
-    override fun welding(context: StateMachineContext) {}
+    override fun welding(context: StateMachineContext, participants: List<Int>) {}
 
     override fun election(context: StateMachineContext) {}
 

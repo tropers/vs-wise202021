@@ -9,10 +9,9 @@ import kotlin.concurrent.withLock
 
 data class Request(var id: Int, var timestamp: Long)
 
-class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMutex {
+class LamportMutex(var id: Int): IDistributedMutex {
     private var requestList: MutableList<Request> = mutableListOf()
     private val requestListLock = ReentrantLock()
-    // TODO: lock signal
 
     // Lock used for waiting
     private val acquireLock = ReentrantLock()
@@ -60,6 +59,7 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
 
         addRequest(req)
 
+        // Send request to other participants
         for (s in stubs) {
             val res = s.call(msg)
 
@@ -67,6 +67,7 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
                 error("LamportMutex: Wrong message type received ${res.type}")
             }
 
+            // Add response from other participants to requests-queue
             val resContent = res.contents
             if (resContent is Request) {
                 addRequest(resContent)
@@ -83,6 +84,10 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
         val req = Request(id, System.nanoTime())
         val msg = Message(MessageType.RELEASE_RESOURCE, req)
 
+        // Remove all requests of self from requests-queue
+        removeRequests(id)
+
+        // Signal other participants
         for (s in stubs) {
             val res = s.call(msg)
 

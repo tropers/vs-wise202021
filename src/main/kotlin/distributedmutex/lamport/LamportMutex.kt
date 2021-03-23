@@ -36,6 +36,8 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
                 removeRequest(r)
             }
         }
+
+        // Signal any waiting resource acquisition
         acquireLockCondition.signalAll()
     }
 
@@ -43,7 +45,7 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
         requestListLock.withLock {
             for (r in requestList) {
                 if ((timestamp < r.timestamp && r.id != id) // If timestamps are equal, check IDs for ordering
-                    || (timestamp == r.timestamp && r.id < id)) { // If other process has lower id than self, weld first
+                    || (timestamp == r.timestamp && r.id > id)) { // If other process has higher id than self, weld after
                     return false
                 }
             }
@@ -75,10 +77,18 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
 
         while(requestList[0].id != id && checkTimestamps(requestList[0].timestamp))
             acquireLockCondition.await()
-
     }
 
     override fun release(stubs: List<Stub>) {
-        TODO("Not yet implemented")
+        val req = Request(id, System.nanoTime())
+        val msg = Message(MessageType.RELEASE_RESOURCE, req)
+
+        for (s in stubs) {
+            val res = s.call(msg)
+
+            if (res.type != MessageType.ACK) {
+                error("LamportMutex: Wrong message type received in release ${res.type}")
+            }
+        }
     }
 }

@@ -2,24 +2,48 @@ import middleware.MessageType
 import middleware.Skeleton
 import middleware.services.*
 import robot.Robot
+import java.io.IOException
+import java.net.Socket
+
+
+private fun available(port: Int): Boolean {
+    try {
+        Socket("localhost", port).use { ignored -> return false }
+    } catch (ignored: IOException) {
+        return true
+    }
+}
 
 fun main(args: Array<String>) {
-    println("Hello, World!")
-
     if (args.size < 2) {
-        println("usage: robot [ID] [PORT]")
+        println("usage: robot [ID] [PORT_RANGE_MIN] [PORT_RANGE_MAX]")
     } else {
         val robot = Robot(args[1].toInt()) // Create robot object
 
-        val portRange = 50050..50066
-        val serv = Skeleton(args[2].toInt()) // Create server skeleton
+        val portRange = args[2].toInt()..args[3].toInt()
 
-        serv.registerService(MessageType.GET_WELDING_COUNT, GetWeldingCountService(robot))
-        serv.registerService(MessageType.REGISTER_REQUEST, RegisterService(robot))
-        serv.registerService(MessageType.COORDINATOR, SetCoordinatorService(robot))
-        serv.registerService(MessageType.WELDING_DONE, WeldingDoneService(robot))
-        serv.registerService(MessageType.WELDING, WeldingService(robot))
+        var port = -1
+        for (p in portRange) {
+            if (available(p))
+                port = p; break
+        }
 
-        serv.run()
+        if (port != -1) {
+            val serv = Skeleton(port) // Create server skeleton
+
+            serv.registerService(MessageType.GET_WELDING_COUNT, GetWeldingCountService(robot))
+            serv.registerService(MessageType.REGISTER_REQUEST, RegisterService(robot))
+            serv.registerService(MessageType.COORDINATOR, SetCoordinatorService(robot))
+            serv.registerService(MessageType.WELDING_DONE, WeldingDoneService(robot))
+            serv.registerService(MessageType.WELDING, WeldingService(robot))
+
+            // Register robot in network
+            robot.register(portRange)
+
+            // Run skeleton server
+            serv.run()
+        } else {
+            error("No port within $args[2]-$args[3] free")
+        }
     }
 }

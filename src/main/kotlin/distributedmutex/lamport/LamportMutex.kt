@@ -14,6 +14,10 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
     private val requestListLock = ReentrantLock()
     // TODO: lock signal
 
+    // Lock used for waiting
+    private val acquireLock = ReentrantLock()
+    private val acquireLockCondition = acquireLock.newCondition()
+
     fun addRequest(req: Request) {
         requestListLock.withLock {
             requestList.add(req)
@@ -32,12 +36,16 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
                 removeRequest(r)
             }
         }
+        acquireLockCondition.signalAll()
     }
 
     private fun checkTimestamps(timestamp: Long): Boolean {
-        for (r in requestList) {
-            if (timestamp < r.timestamp && r.id != id) {
-                return false
+        requestListLock.withLock {
+            for (r in requestList) {
+                if ((timestamp < r.timestamp && r.id != id) // If timestamps are equal, check IDs for ordering
+                    || (timestamp == r.timestamp && r.id < id)) { // If other process has higher id than self, weld first
+                    return false
+                }
             }
         }
 
@@ -66,7 +74,7 @@ class LamportMutex(var id: Int, var stub: MutableMap<Int, Stub>): IDistributedMu
         }
 
         while(requestList[0].id != id && checkTimestamps(requestList[0].timestamp))
-            // TODO
+            acquireLockCondition.await()
 
     }
 

@@ -35,8 +35,8 @@ class RobotCaller(
         return call(req)
     }
 
-    fun systemFailure(): Message {
-        val req = Message(MessageType.ERR, "system_failure")
+    fun robotFailure(): Message {
+        val req = Message(MessageType.ROBOT_FAILURE, robot.id)
         return call(req)
     }
 }

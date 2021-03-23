@@ -11,7 +11,7 @@ const val WELDING_ROBOTS_AMOUNT = 2
 
 class StateMachineContext(
     var robot: Robot,
-    var mutex: IDistributedMutex // Distributed Mutex for mutual exclusion during welding
+    var distributedMutex: IDistributedMutex // Distributed Mutex for mutual exclusion during welding
 ) {
     var currentState: State = StateInitial(this)
 

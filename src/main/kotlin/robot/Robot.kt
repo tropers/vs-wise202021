@@ -6,6 +6,8 @@ import middleware.MessageType
 import middleware.Stub
 import robot.statemachine.StateMachineContext
 import java.io.IOException
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class Robot(var id: Int) {
     var weldingCount: Int = 0
@@ -13,6 +15,9 @@ class Robot(var id: Int) {
     var robotCallers: MutableMap<Int, RobotCaller> = mutableMapOf()
     var currentCoordinator: Robot? = null
     var stateMachine: StateMachineContext = StateMachineContext(this, LamportMutex(id)) // Use the Lamport Mutex
+
+    // Lock for accessing the participants list and robotCallers
+    var participantsLock = ReentrantLock()
 
     // Registers the robot in the network
     fun register(portRange: IntRange) {
@@ -25,8 +30,10 @@ class Robot(var id: Int) {
 
                 val robot = res.contents
                 if (res.type == MessageType.REGISTER_RESPONSE && robot is Robot) {
-                    participants[robot.id] = robot
-                    robotCallers[robot.id] = RobotCaller("localhost", port, robot)
+                    participantsLock.withLock {
+                        participants[robot.id] = robot
+                        robotCallers[robot.id] = RobotCaller("localhost", port, robot)
+                    }
                 } else {
                     error("RegisterError: Response has wrong type $robot")
                 }

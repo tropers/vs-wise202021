@@ -17,6 +17,7 @@ enum class MessageType {
     REQUEST_RESOURCE,
     REQUEST_RESOURCE_RESPONSE,
     RELEASE_RESOURCE,
+    ROBOT_FAILURE,
     ACK,
     ERR
 }

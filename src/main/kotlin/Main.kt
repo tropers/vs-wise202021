@@ -5,13 +5,21 @@ import robot.Robot
 import java.io.IOException
 import java.net.Socket
 
-
-private fun available(port: Int): Boolean {
+fun portAvailable(port: Int): Boolean {
     try {
         Socket("localhost", port).use { ignored -> return false }
     } catch (ignored: IOException) {
         return true
     }
+}
+
+fun getFreePort(portRange: IntRange): Int {
+    for (p in portRange) {
+        if (portAvailable(p))
+            return p
+    }
+
+    error("No port within $portRange free")
 }
 
 fun main(args: Array<String>) {
@@ -22,28 +30,24 @@ fun main(args: Array<String>) {
 
         val portRange = args[2].toInt()..args[3].toInt()
 
-        var port = -1
-        for (p in portRange) {
-            if (available(p))
-                port = p; break
-        }
+        val port = getFreePort(portRange)
 
-        if (port != -1) {
-            val serv = Skeleton(port) // Create server skeleton
+        val serv = Skeleton(port) // Create server skeleton
 
-            serv.registerService(MessageType.GET_WELDING_COUNT, GetWeldingCountService(robot))
-            serv.registerService(MessageType.REGISTER_REQUEST, RegisterService(robot))
-            serv.registerService(MessageType.COORDINATOR, SetCoordinatorService(robot))
-            serv.registerService(MessageType.WELDING_DONE, WeldingDoneService(robot))
-            serv.registerService(MessageType.WELDING, WeldingService(robot))
+        serv.registerService(MessageType.GET_WELDING_COUNT, GetWeldingCountService(robot))
+        serv.registerService(MessageType.REGISTER_REQUEST, RegisterService(robot))
+        serv.registerService(MessageType.COORDINATOR, SetCoordinatorService(robot))
+        serv.registerService(MessageType.WELDING_DONE, WeldingDoneService(robot))
+        serv.registerService(MessageType.WELDING, WeldingService(robot))
+        serv.registerService(MessageType.ROBOT_FAILURE, RobotFailureService(robot))
 
-            // Register robot in network
-            robot.register(portRange)
+        // Register robot in network
+        robot.register(portRange)
 
-            // Run skeleton server
-            serv.run()
-        } else {
-            error("No port within $args[2]-$args[3] free")
-        }
+        while (robot.participants.size < 2)
+            continue
+
+        // Run skeleton server
+        serv.run()
     }
 }

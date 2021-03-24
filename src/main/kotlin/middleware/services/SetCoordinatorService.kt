@@ -11,6 +11,9 @@ class SetCoordinatorService(private var robot: Robot): Service {
 
         if (id is Int) {
             robot.currentCoordinator = robot.participants[id]
+            if (id == robot.id) { // Is coordinator
+                robot.stateMachine.currentState.coordinator(robot.stateMachine)
+            }
         } else {
             error("SetCoordinator failed: Wrong type of message contents ${m.contents}")
         }

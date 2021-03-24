@@ -11,7 +11,11 @@ class WeldingService(private var robot: Robot): Service {
 
         if (participants is List<*>) {
             if (participants.all { it is Int }) {
-                robot.stateMachine.currentState.welding(robot.stateMachine, participants as List<Int>)
+                // Run welding in thread
+                Thread {
+                    robot.stateMachine.currentState.welding(robot.stateMachine, participants as List<Int>)
+                }.start()
+
                 return Message(MessageType.ACK, "OK")
             } else {
                 error("WeldingService: Participants list received has wrong type (not int) $participants")

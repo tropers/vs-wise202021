@@ -26,6 +26,45 @@ class Robot(var id: Int) {
     // Distributed Lock used for welding
     private var distributedMutex: IDistributedMutex = LamportMutex(id) // Use Lamport
 
+    private var weldingLock = ReentrantLock()
+    private var weldingSignal = weldingLock.newCondition()
+
+    // Get stubs of robots participating in a welding process
+    fun getStubs(participants: List<Int>): List<Stub> {
+        val stubs = mutableListOf<Stub>()
+
+        participantsLock.withLock {
+            for (p in participants) {
+                if (p in robotCallers.keys)
+                // Add RobotCaller to stubs list if not null
+                    robotCallers[p]?.let { stubs.add(it) }
+            }
+        }
+
+        return stubs
+    }
+
+    // Get list of robots sorted by weldingcount
+    fun getSortedRobotList(): List<Robot> {
+        var robots = mutableListOf<Robot>()
+
+        participantsLock.withLock {
+            for ((k, v) in robotCallers) {
+                val wc = v.weldingCount().contents
+
+                if (wc is Int) {
+                    participants[k]?.weldingCount = wc
+                }
+            }
+
+            // Sort all robots by weldingcount
+            robots = participants.toList().map { it.second } as MutableList<Robot>
+            robots.sortedBy { weldingCount }
+        }
+
+        return robots
+    }
+
     // Registers the robot in the network
     fun register(portRange: IntRange) {
         for (port in portRange) {
@@ -49,6 +88,7 @@ class Robot(var id: Int) {
         }
     }
 
+    // TODO: Probably have to change this (parameters not listed in assignment)
     fun welding(stubs: List<Stub>): Boolean {
         // Acquire the distributed mutex
         distributedMutex.acquire(stubs)

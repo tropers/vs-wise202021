@@ -10,8 +10,8 @@ class RobotCaller(
     private val robot: Robot
 ): Stub(uri, port) {
 
-    fun coordinator(): Message {
-        val req = Message(MessageType.COORDINATOR, robot.id)
+    fun coordinator(id: Int): Message {
+        val req = Message(MessageType.COORDINATOR, id)
         return call(req)
     }
 

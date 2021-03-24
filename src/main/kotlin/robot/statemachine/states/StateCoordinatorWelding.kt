@@ -7,19 +7,15 @@ import kotlin.concurrent.withLock
 
 class StateCoordinatorWelding(context: StateMachineContext, private var cycle: List<Int>): State {
     init {
-        val stubs = context.getStubs(cycle)
+        val stubs = context.robot.getStubs(cycle)
 
         // Call other participants to weld
         for ((_, v) in context.robot.robotCallers) {
             v.welding(cycle)
         }
 
-        var weldingSuccessful = false
-
         // Also weld
-        Thread {
-            weldingSuccessful = context.robot.welding(stubs)
-        }.start()
+        var weldingSuccessful = context.robot.welding(stubs)
 
         if (!context.weldingCountDownLatch.await(4, TimeUnit.SECONDS)) { // TODO: make configurable
             context.robot.participantsLock.withLock {
@@ -29,7 +25,24 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
             }
             context.currentState = StateError(context)
         } else {
+            // Choose new coordinator
+            val robots = context.robot.getSortedRobotList()
 
+            var i = 0
+            var newCoordinator = robots[i]
+            while (newCoordinator.id == context.robot.id)
+                newCoordinator = robots[++i]
+
+            // Set new coordinator
+            context.robot.currentCoordinator = newCoordinator
+
+            context.robot.participantsLock.withLock {
+                for ((_, v)in context.robot.robotCallers) {
+                    v.coordinator(newCoordinator.id)
+                }
+            }
+
+            context.currentState = StateIdle(context)
         }
     }
 

@@ -13,25 +13,17 @@ class StateWelding(context: StateMachineContext, private var cycle: List<Int>): 
     }
 
     private fun doWeld(context: StateMachineContext) {
-
-        val stubs = context.getStubs(cycle)
-
-        // To check if welding has been successful or not
-        var weldingSuccessful = false
-
-        Thread {
-            weldingSuccessful = context.robot.welding(stubs)
-        }.start()
+        val stubs = context.robot.getStubs(cycle)
 
         // If welding successful, go into idle state, if not error
-        if (weldingSuccessful) {
+        if (context.robot.welding(stubs)) {
             context.currentState = StateIdle(context)
         } else {
             context.currentState = StateError(context)
         }
     }
 
-override fun welding(context: StateMachineContext, cycle: List<Int>) {}
+    override fun welding(context: StateMachineContext, cycle: List<Int>) {}
 
     override fun election(context: StateMachineContext) {}
 

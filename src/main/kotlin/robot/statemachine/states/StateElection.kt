@@ -33,8 +33,8 @@ class StateElection(context: StateMachineContext): State {
         context.robot.currentCoordinator = context.robot
 
         // Send victory message
-        for ((k, v) in context.robot.robotCallers) {
-            v.coordinator()
+        for ((_, v) in context.robot.robotCallers) {
+            v.coordinator(context.robot.id)
         }
 
         context.currentState = StateCoordinator(context)

@@ -7,56 +7,31 @@ import robot.statemachine.StateMachineContext
 import kotlin.concurrent.withLock
 import kotlin.random.Random
 
-class StateWelding(context: StateMachineContext, var participants: List<Int>): State {
+class StateWelding(context: StateMachineContext, private var cycle: List<Int>): State {
     init {
         doWeld(context)
     }
 
     private fun doWeld(context: StateMachineContext) {
 
-        val stubs = mutableListOf<Stub>()
+        val stubs = context.getStubs(cycle)
 
-        context.robot.participantsLock.withLock {
-            for (p in participants) {
-                if (p in context.robot.robotCallers.keys)
-                // Add RobotCaller to stubs list if not null
-                    context.robot.robotCallers[p]?.let { stubs.add(it) }
-            }
-        }
-
-        // Acquire the distributed mutex
-        context.distributedMutex.acquire(stubs)
+        // To check if welding has been successful or not
+        var weldingSuccessful = false
 
         Thread {
-            Thread.sleep(1000) // TODO: make configurable
-
-            if (Random.nextInt(0, 100) > 1) { // 99% chance
-                var ack: Message?
-
-                context.robot.participantsLock.withLock {
-                    ack = context.robot.robotCallers[context.robot.currentCoordinator?.id]?.weldingSuccessful()
-                }
-
-                if (ack?.type != MessageType.ACK) {
-                    // TODO: What to do with mutex in error state (possibly release like below)
-                    context.distributedMutex.release(stubs)
-                    context.currentState = StateError(context)
-                } else {
-                    // Increase weldingcount
-                    ++context.robot.weldingCount
-
-                    // Release the distributed mutex
-                    context.distributedMutex.release(stubs)
-
-                    context.currentState = StateIdle(context)
-                }
-            } else {
-                context.currentState = StateError(context)
-            }
+            weldingSuccessful = context.robot.welding(stubs)
         }.start()
+
+        // If welding successful, go into idle state, if not error
+        if (weldingSuccessful) {
+            context.currentState = StateIdle(context)
+        } else {
+            context.currentState = StateError(context)
+        }
     }
 
-    override fun welding(context: StateMachineContext, participants: List<Int>) {}
+override fun welding(context: StateMachineContext, cycle: List<Int>) {}
 
     override fun election(context: StateMachineContext) {}
 

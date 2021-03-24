@@ -13,7 +13,7 @@ class StateError(context: StateMachineContext): State {
         }
     }
 
-    override fun welding(context: StateMachineContext, participants: List<Int>) {}
+    override fun welding(context: StateMachineContext, cycle: List<Int>) {}
 
     override fun election(context: StateMachineContext) {}
 

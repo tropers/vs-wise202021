@@ -30,24 +30,12 @@ class StateCoordinator(context: StateMachineContext): State {
             // Select robots with smallest welding count
             // and add self to cycle
             cycle = listOf(context.robot.id, robots[0].second.id, robots[1].second.id)
-            for ((_, v) in context.robot.robotCallers) {
-                v.welding(cycle)
-            }
         }
 
-        if (context.weldingCountDownLatch.await(4, TimeUnit.SECONDS)) { // TODO: make configurable
-            context.currentState = StateCoordinatorWelding(context, cycle)
-        } else { // ERROR
-            context.robot.participantsLock.withLock {
-                for ((k, v) in context.robot.robotCallers) {
-                    v.robotFailure()
-                }
-            }
-            context.currentState = StateError(context)
-        }
+        context.currentState = StateCoordinatorWelding(context, cycle)
     }
 
-    override fun welding(context: StateMachineContext, participants: List<Int>) {}
+    override fun welding(context: StateMachineContext, cycle: List<Int>) {}
 
     override fun election(context: StateMachineContext) {}
 

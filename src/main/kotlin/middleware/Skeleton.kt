@@ -9,8 +9,8 @@ import java.util.concurrent.LinkedBlockingDeque
 
 class Skeleton(private var port: Int): Runnable {
     private var running = true
-    private var requestQueue: BlockingQueue<Socket> = LinkedBlockingDeque<Socket>()
-    private var services: MutableMap<MessageType, Service> = mutableMapOf<MessageType, Service>()
+    private var requestQueue: BlockingQueue<Socket> = LinkedBlockingDeque()
+    private var services: MutableMap<MessageType, Service> = mutableMapOf()
 
     private fun handleRequests() {
         while (true) {
@@ -18,13 +18,17 @@ class Skeleton(private var port: Int): Runnable {
 
             val inputStream = ObjectInputStream(socket.getInputStream())
 
-            val msg = inputStream.readObject() as Message
+            val msg = inputStream.readObject()
 
-            val response = services[msg.type]?.call(msg)
+            if (msg is Message) {
+                val response = services[msg.type]?.call(msg)
 
-            val outputStream = ObjectOutputStream(socket.getOutputStream())
+                val outputStream = ObjectOutputStream(socket.getOutputStream())
 
-            outputStream.writeObject(response)
+                outputStream.writeObject(response)
+            } else {
+                error("SkeletonHandleRequest: Data received is not a message")
+            }
         }
     }
 

@@ -6,8 +6,6 @@ import middleware.Message
 import middleware.MessageType
 import middleware.Stub
 import robot.statemachine.StateMachineContext
-import robot.statemachine.states.StateError
-import robot.statemachine.states.StateIdle
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -24,7 +22,7 @@ class Robot(var id: Int) {
     var participantsLock = ReentrantLock()
 
     // Distributed Lock used for welding
-    private var distributedMutex: IDistributedMutex = LamportMutex(id) // Use Lamport
+    var distributedMutex: IDistributedMutex = LamportMutex(id) // Use Lamport
 
     private var weldingLock = ReentrantLock()
     private var weldingSignal = weldingLock.newCondition()
@@ -66,25 +64,28 @@ class Robot(var id: Int) {
     }
 
     // Registers the robot in the network
-    fun register(portRange: IntRange) {
+    fun register(ownPort: Int, portRange: IntRange) {
         for (port in portRange) {
-            try {
-                val stub = Stub("localhost", port) // TODO: configurable IP
-                val registerReq = Message(MessageType.REGISTER_REQUEST, this)
+            if (port != ownPort) {
+                try {
+                    println("[${id}]: Registering at $port")
+                    val stub = Stub("localhost", port) // TODO: configurable IP
+                    val registerReq = Message(MessageType.REGISTER_REQUEST, id)
 
-                val res = stub.call(registerReq)
+                    val res = stub.call(registerReq)
 
-                val robot = res.contents
-                if (res.type == MessageType.REGISTER_RESPONSE && robot is Robot) {
-                    participantsLock.withLock {
-                        participants[robot.id] = robot
-                        robotCallers[robot.id] = RobotCaller("localhost", port, robot)
+                    val robotId = res.contents
+                    if (res.type == MessageType.REGISTER_RESPONSE && robotId is Int) {
+                        participantsLock.withLock {
+                            val robot = Robot(robotId)
+                            participants[robotId] = robot
+                            robotCallers[robotId] = RobotCaller("localhost", port, robot)
+                        }
+                    } else {
+                        error("RegisterError: Response has wrong type $robotId")
                     }
-                } else {
-                    error("RegisterError: Response has wrong type $robot")
-                }
-
-            } catch(e: IOException) { /* If no connection can be made, skip */ }
+                } catch (e: IOException) {} /* If no connection can be made, skip */
+            }
         }
     }
 
@@ -92,6 +93,7 @@ class Robot(var id: Int) {
     fun welding(stubs: List<Stub>): Boolean {
         // Acquire the distributed mutex
         distributedMutex.acquire(stubs)
+        println("ROBOT $id WELDING")
 
         Thread.sleep(1000) // TODO: make configurable
 

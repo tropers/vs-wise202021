@@ -17,7 +17,7 @@ open class Stub(private var uri: String, private var port: Int) {
         if (response is Message) {
             return response
         } else {
-            error("Calling Robot with ${m.type} failed: Response is not a message")
+            error("Stub: Calling Robot with ${m.type} failed: Response is not a message")
         }
     }
 }

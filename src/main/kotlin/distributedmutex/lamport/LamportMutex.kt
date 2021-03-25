@@ -4,10 +4,11 @@ import distributedmutex.IDistributedMutex
 import middleware.Message
 import middleware.MessageType
 import middleware.Stub
+import java.io.Serializable
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-data class Request(var id: Int, var timestamp: Long)
+data class Request(var id: Int, var timestamp: Long): Serializable
 
 class LamportMutex(var id: Int): IDistributedMutex {
     private var requestList: MutableList<Request> = mutableListOf()
@@ -30,9 +31,11 @@ class LamportMutex(var id: Int): IDistributedMutex {
     }
 
     fun removeRequests(id: Int) {
-        for (r in requestList) {
-            if (r.id == id) {
-                removeRequest(r)
+        requestListLock.withLock {
+            for (r in requestList) {
+                if (r.id == id) {
+                    removeRequest(r)
+                }
             }
         }
 

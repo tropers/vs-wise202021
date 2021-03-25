@@ -1,9 +1,11 @@
 package middleware
 
+import java.io.Serializable
+
 /**
  * MessageType designates the different messages exchanged between services
  */
-enum class MessageType {
+enum class MessageType: Serializable {
     REGISTER_REQUEST,
     REGISTER_RESPONSE,
     ELECTION,

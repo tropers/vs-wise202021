@@ -10,10 +10,10 @@ import java.io.IOException
  */
 class StateElection(context: StateMachineContext): State {
     init {
-        doElection(context)
+        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
     }
 
-    private fun doElection(context: StateMachineContext) {
+    override fun entry(context: StateMachineContext) {
         // Bully-Algorithm for electing the coordinator
         // Send election message to all higherups
         for ((k, v) in context.robot.participants) {
@@ -22,6 +22,7 @@ class StateElection(context: StateMachineContext): State {
                     val m = context.robot.robotCallers[k]?.election()
                     if (m is Message && m.contents is String && m.contents == "OK") {
                         context.currentState = StateIdle(context)
+                        context.currentState.entry(context)
                         return // Abort if someone responded (did not win election)
                     }
                 } catch (e: IOException) {
@@ -38,6 +39,7 @@ class StateElection(context: StateMachineContext): State {
         }
 
         context.currentState = StateCoordinator(context)
+        context.currentState.entry(context)
     }
 
     override fun welding(context: StateMachineContext, cycle: List<Int>) {}
@@ -48,5 +50,6 @@ class StateElection(context: StateMachineContext): State {
 
     override fun systemFailure(context: StateMachineContext) {
         context.currentState = StateError(context)
+        context.currentState.entry(context)
     }
 }

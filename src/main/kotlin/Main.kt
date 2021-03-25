@@ -63,8 +63,10 @@ fun main(args: Array<String>) {
         // Register robot in network
         robot.register(port, portRange)
 
-        while (robot.participants.size < 2)
-            continue
+        while (robot.participants.size < 2) {
+            println(robot.participants.size)
+            Thread.sleep(1000)
+        }
 
         println("[${args[0]}]: Enough robots in system, starting experiment!")
         robot.stateMachine.currentState.election(robot.stateMachine)

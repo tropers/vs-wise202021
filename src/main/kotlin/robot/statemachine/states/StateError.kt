@@ -5,6 +5,10 @@ import kotlin.concurrent.withLock
 
 class StateError(context: StateMachineContext): State {
     init {
+        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
+    }
+
+    override fun entry(context: StateMachineContext) {
         // Tell everyone robot has failed
         context.robot.participantsLock.withLock {
             for ((_, v) in context.robot.robotCallers) {

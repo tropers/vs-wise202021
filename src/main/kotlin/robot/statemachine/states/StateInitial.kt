@@ -3,11 +3,17 @@ package robot.statemachine.states
 import robot.statemachine.StateMachineContext
 
 class StateInitial(context: StateMachineContext): State{
+    init {
+        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
+    }
+
+    override fun entry(context: StateMachineContext) {}
 
     override fun welding(context: StateMachineContext, cycle: List<Int>) {}
 
     override fun election(context: StateMachineContext) {
         context.currentState = StateElection(context)
+        context.currentState.entry(context)
     }
 
     override fun coordinator(context: StateMachineContext) {}

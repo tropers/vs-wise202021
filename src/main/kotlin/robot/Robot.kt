@@ -4,6 +4,7 @@ import distributedmutex.IDistributedMutex
 import distributedmutex.lamport.LamportMutex
 import middleware.Message
 import middleware.MessageType
+import middleware.RegisterRequest
 import middleware.Stub
 import robot.statemachine.StateMachineContext
 import java.io.IOException
@@ -70,7 +71,7 @@ class Robot(var id: Int) {
                 try {
                     println("[${id}]: Registering at $port")
                     val stub = Stub("localhost", port) // TODO: configurable IP
-                    val registerReq = Message(MessageType.REGISTER_REQUEST, id)
+                    val registerReq = Message(MessageType.REGISTER_REQUEST, RegisterRequest(id,  "localhost", ownPort)) // TODO: configurable IP?
 
                     val res = stub.call(registerReq)
 
@@ -79,7 +80,7 @@ class Robot(var id: Int) {
                         participantsLock.withLock {
                             val robot = Robot(robotId)
                             participants[robotId] = robot
-                            robotCallers[robotId] = RobotCaller("localhost", port, robot)
+                            robotCallers[robotId] = RobotCaller("localhost", port, this)
                         }
                     } else {
                         error("RegisterError: Response has wrong type $robotId")
@@ -91,9 +92,10 @@ class Robot(var id: Int) {
 
     // TODO: Probably have to change this (parameters not listed in assignment)
     fun welding(stubs: List<Stub>): Boolean {
+        println("[$id]: Preparing to weld...")
         // Acquire the distributed mutex
         distributedMutex.acquire(stubs)
-        println("ROBOT $id WELDING")
+        println("[$id]: welding...")
 
         Thread.sleep(1000) // TODO: make configurable
 
@@ -101,7 +103,11 @@ class Robot(var id: Int) {
             var ack: Message?
 
             participantsLock.withLock {
-                ack = robotCallers[currentCoordinator?.id]?.weldingSuccessful()
+                if (currentCoordinator?.id == id) {
+                    ack = Message(MessageType.ACK, "Coordinator called itself")
+                } else {
+                    ack = robotCallers[currentCoordinator?.id]?.weldingSuccessful()
+                }
             }
 
             if (ack?.type != MessageType.ACK) {

@@ -6,11 +6,11 @@ import kotlin.concurrent.withLock
 
 class StateCoordinator(context: StateMachineContext): State {
     init {
-        chooseCycle(context)
+        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
     }
 
     // The coordinator chooses the cycle for welding
-    private fun chooseCycle(context: StateMachineContext) {
+    override fun entry(context: StateMachineContext) {
         // Get welding count of every robot
         val robots = context.robot.getSortedRobotList()
 
@@ -19,6 +19,7 @@ class StateCoordinator(context: StateMachineContext): State {
         val cycle = listOf(context.robot.id, robots[0].id, robots[1].id)
 
         context.currentState = StateCoordinatorWelding(context, cycle)
+        context.currentState.entry(context)
     }
 
     override fun welding(context: StateMachineContext, cycle: List<Int>) {}
@@ -29,5 +30,6 @@ class StateCoordinator(context: StateMachineContext): State {
 
     override fun systemFailure(context: StateMachineContext) {
         context.currentState = StateError(context)
+        context.currentState.entry(context)
     }
 }

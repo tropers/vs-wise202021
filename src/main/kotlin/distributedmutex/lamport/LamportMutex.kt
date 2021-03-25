@@ -13,6 +13,7 @@ data class Request(var id: Int, var timestamp: Long): Serializable
 class LamportMutex(var id: Int): IDistributedMutex {
     private var requestList: MutableList<Request> = mutableListOf()
     private val requestListLock = ReentrantLock()
+    private val requestListLockCondition = requestListLock.newCondition()
 
     // Lock used for waiting
     private val acquireLock = ReentrantLock()
@@ -32,15 +33,11 @@ class LamportMutex(var id: Int): IDistributedMutex {
 
     fun removeRequests(id: Int) {
         requestListLock.withLock {
-            for (r in requestList) {
-                if (r.id == id) {
-                    removeRequest(r)
-                }
-            }
-        }
+            requestList.removeAll { it.id == id}
 
-        // Signal any waiting resource acquisition
-        acquireLockCondition.signalAll()
+            // Signal any waiting resource acquisition
+            requestListLockCondition.signalAll()
+        }
     }
 
     private fun checkTimestamps(timestamp: Long): Boolean {
@@ -79,8 +76,10 @@ class LamportMutex(var id: Int): IDistributedMutex {
             }
         }
 
-        while(requestList[0].id != id && checkTimestamps(requestList[0].timestamp))
-            acquireLockCondition.await()
+        requestListLock.withLock {
+            while (requestList[0].id != id && checkTimestamps(requestList[0].timestamp))
+                requestListLockCondition.await()
+        }
     }
 
     override fun release(stubs: List<Stub>) {

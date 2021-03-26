@@ -40,13 +40,15 @@ class LamportMutex(var id: Int): IDistributedMutex {
         }
     }
 
-    private fun checkTimestamps(timestamp: Long): Boolean {
-        requestListLock.withLock {
-            for (r in requestList) {
-                if ((timestamp < r.timestamp && r.id != id) // If timestamps are equal, check IDs for ordering
-                    || (timestamp == r.timestamp && r.id > id)) { // If other process has higher id than self, weld after
-                    return false
-                }
+    private fun checkTimestamps(): Boolean {
+        val myRequest = requestList.find { it.id == id } ?: error("No request with own ID found in requestList")
+
+        for (r in requestList) {
+            if (id == r.id) continue
+
+            if ((myRequest.timestamp < r.timestamp && r.id != id) // If timestamps are equal, check IDs for ordering
+                || (myRequest.timestamp == r.timestamp && r.id > id)) { // If other process has higher id than self, weld after
+                return false
             }
         }
 
@@ -70,14 +72,14 @@ class LamportMutex(var id: Int): IDistributedMutex {
             // Add response from other participants to requests-queue
             val resContent = res.contents
             if (resContent is Request) {
-                addRequest(resContent)
+//                addRequest(resContent)
             } else {
                 error("LamportMutex: Content of response $res is not Request type")
             }
         }
 
         requestListLock.withLock {
-            while (requestList[0].id != id && checkTimestamps(requestList[0].timestamp))
+            while (!checkTimestamps())
                 requestListLockCondition.await()
         }
     }

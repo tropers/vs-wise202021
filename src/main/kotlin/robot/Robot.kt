@@ -105,6 +105,7 @@ class Robot(var id: Int) {
             participantsLock.withLock {
                 if (currentCoordinator?.id == id) {
                     ack = Message(MessageType.ACK, "Coordinator called itself")
+                    stateMachine.weldingCountDownLatch.countDown()
                 } else {
                     ack = robotCallers[currentCoordinator?.id]?.weldingSuccessful()
                 }

@@ -1,7 +1,8 @@
 package robot.statemachine.states
 
-import robot.Robot
 import robot.statemachine.StateMachineContext
+import robot.statemachine.WELDING_ROBOTS_AMOUNT
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.withLock
 
@@ -11,6 +12,8 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
     }
 
     override fun entry(context: StateMachineContext) {
+        context.weldingCountDownLatch = CountDownLatch(WELDING_ROBOTS_AMOUNT)
+
         val stubs = context.robot.getStubs(cycle)
 
         // Call other participants to weld
@@ -32,6 +35,7 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
             context.currentState = StateError(context)
             context.currentState.entry(context)
         } else {
+            println("[${context.robot.id}]: Choosing new coordinator...")
             // Choose new coordinator
             val robots = context.robot.getSortedRobotList()
 
@@ -40,6 +44,7 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
             while (newCoordinator.id == context.robot.id)
                 newCoordinator = robots[++i]
 
+            println("[${context.robot.id}]: New coordinator: ${newCoordinator.id}")
             // Set new coordinator
             context.robot.currentCoordinator = newCoordinator
 

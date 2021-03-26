@@ -31,7 +31,7 @@ class RobotCaller(
     }
 
     fun weldingSuccessful(): Message {
-        val req = Message(MessageType.WELDING_DONE, 0)
+        val req = Message(MessageType.WELDING_DONE, robot.id)
         return call(req)
     }
 

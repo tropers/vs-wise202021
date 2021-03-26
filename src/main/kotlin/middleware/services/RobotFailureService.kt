@@ -10,7 +10,7 @@ class RobotFailureService(private var robot: Robot): Service {
     override fun call(m: Message): Any {
         val robotId = m.contents
 
-        if (m.type == MessageType.ERR && robotId is Int) {
+        if (m.type == MessageType.ROBOT_FAILURE && robotId is Int) {
             robot.participantsLock.withLock {
                 robot.participants.remove(m.contents)
                 robot.robotCallers.remove(m.contents)

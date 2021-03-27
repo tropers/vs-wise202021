@@ -46,7 +46,7 @@ class LamportMutex(var id: Int): IDistributedMutex {
         for (r in requestList) {
             if (id == r.id) continue
 
-            if ((myRequest.timestamp < r.timestamp && r.id != id) // If timestamps are equal, check IDs for ordering
+            if ((myRequest.timestamp > r.timestamp && r.id != id) // If timestamps are equal, check IDs for ordering
                 || (myRequest.timestamp == r.timestamp && r.id > id)) { // If other process has higher id than self, weld after
                 return false
             }

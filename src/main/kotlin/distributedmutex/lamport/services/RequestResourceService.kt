@@ -16,6 +16,6 @@ class RequestResourceService(private var lamport: LamportMutex): Service {
             error("Requesting resource failed: Wrong type of message contents ${m.contents}")
         }
 
-        return Message(MessageType.REQUEST_RESOURCE_RESPONSE, Request(lamport.id, 0))
+        return Message(MessageType.REQUEST_RESOURCE_RESPONSE, Request(lamport.id, System.currentTimeMillis()))
     }
 }

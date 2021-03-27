@@ -56,7 +56,7 @@ class LamportMutex(var id: Int): IDistributedMutex {
     }
 
     override fun acquire(stubs: List<Stub>) {
-        val req = Request(id, 0)
+        val req = Request(id, System.currentTimeMillis())
         val msg = Message(MessageType.REQUEST_RESOURCE, req)
 
         addRequest(req)
@@ -72,7 +72,7 @@ class LamportMutex(var id: Int): IDistributedMutex {
             // Add response from other participants to requests-queue
             val resContent = res.contents
             if (resContent is Request) {
-//                addRequest(resContent)
+//                addRequest(resContent) // TODO: Fix up this area (handle ACK properly)
             } else {
                 error("LamportMutex: Content of response $res is not Request type")
             }
@@ -85,7 +85,7 @@ class LamportMutex(var id: Int): IDistributedMutex {
     }
 
     override fun release(stubs: List<Stub>) {
-        val req = Request(id, 0)
+        val req = Request(id, System.currentTimeMillis())
         val msg = Message(MessageType.RELEASE_RESOURCE, req)
 
         // Remove all requests of self from requests-queue

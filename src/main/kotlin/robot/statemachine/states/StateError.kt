@@ -5,7 +5,7 @@ import kotlin.concurrent.withLock
 
 class StateError(context: StateMachineContext): State {
     init {
-        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
+        context.robot.logger?.log("[${context.robot.id}]: Entering ${this.javaClass.name}")
     }
 
     override fun entry(context: StateMachineContext) {

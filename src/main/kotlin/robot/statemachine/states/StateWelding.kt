@@ -4,7 +4,7 @@ import robot.statemachine.StateMachineContext
 
 class StateWelding(context: StateMachineContext, private var cycle: List<Int>): State {
     init {
-        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
+        context.robot.logger?.log("[${context.robot.id}]: Entering ${this.javaClass.name}")
     }
 
     override fun entry(context: StateMachineContext) {

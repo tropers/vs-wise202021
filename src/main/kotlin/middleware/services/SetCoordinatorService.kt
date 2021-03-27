@@ -11,14 +11,14 @@ class SetCoordinatorService(private var robot: Robot): Service {
 
         if (id is Int) {
             if (id == robot.id) { // Is coordinator
-                println("[${robot.id}]: Got elected new coordinator!")
+                robot.logger?.log("[${robot.id}]: Got elected new coordinator!")
                 robot.currentCoordinator = robot
 
                 Thread {
                     robot.stateMachine.currentState.coordinator(robot.stateMachine)
                 }.start()
             } else {
-                println("[${robot.id}]: New coordinator received: $id.")
+                robot.logger?.log("[${robot.id}]: New coordinator received: $id.")
                 robot.currentCoordinator = robot.participants[id]
             }
         } else {

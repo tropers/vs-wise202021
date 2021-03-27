@@ -23,6 +23,7 @@ enum class MessageType: Serializable {
     REQUEST_RESOURCE_RESPONSE,
     RELEASE_RESOURCE,
     ROBOT_FAILURE,
+    LOG,
     ACK,
     ERR
 }

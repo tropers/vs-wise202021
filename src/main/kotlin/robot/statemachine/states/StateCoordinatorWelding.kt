@@ -11,7 +11,7 @@ import kotlin.concurrent.withLock
 
 class StateCoordinatorWelding(context: StateMachineContext, private var cycle: List<Int>): State {
     init {
-        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
+        context.robot.logger?.log("[${context.robot.id}]: Entering ${this.javaClass.name}")
     }
 
     override fun entry(context: StateMachineContext) {
@@ -39,7 +39,7 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
             context.robot.welding(stubs)
         }.start()
 
-        if (!context.weldingCountDownLatch.await(4, TimeUnit.SECONDS)) { // TODO: make configurable
+        if (!context.weldingCountDownLatch.await(8, TimeUnit.SECONDS)) { // TODO: make configurable
             context.robot.participantsLock.withLock {
                 for ((k, v) in context.robot.robotCallers) {
                     v.robotFailure()
@@ -48,7 +48,7 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
             context.currentState = StateError(context)
             context.currentState.entry(context)
         } else {
-            println("[${context.robot.id}]: Choosing new coordinator...")
+            context.robot.logger?.log("[${context.robot.id}]: Choosing new coordinator...")
             // Choose new coordinator
             val robots = context.robot.getSortedRobotList()
 
@@ -57,7 +57,7 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
             while (newCoordinator.id == context.robot.id)
                 newCoordinator = robots[++i]
 
-            println("[${context.robot.id}]: New coordinator: ${newCoordinator.id}")
+            context.robot.logger?.log("[${context.robot.id}]: New coordinator: ${newCoordinator.id}")
             // Set new coordinator
             context.robot.currentCoordinator = newCoordinator
 

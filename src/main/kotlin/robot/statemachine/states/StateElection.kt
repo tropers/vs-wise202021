@@ -10,13 +10,13 @@ import java.io.IOException
  */
 class StateElection(context: StateMachineContext): State {
     init {
-        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
+        context.robot.logger?.log("[${context.robot.id}]: Entering ${this.javaClass.name}")
     }
 
     override fun entry(context: StateMachineContext) {
         // If no coordinator has been elected in the system
         if (context.robot.currentCoordinator == null) {
-            println("[${context.robot.id}]: No coordinator set in current run, starting election.")
+            context.robot.logger?.log("[${context.robot.id}]: No coordinator set in current run, starting election.")
 
             // Bully-Algorithm for electing the coordinator
             // Send election message to all higherups
@@ -30,7 +30,7 @@ class StateElection(context: StateMachineContext): State {
                             return // Abort if someone responded (did not win election)
                         }
                     } catch (e: IOException) {
-                        println("Robot $k not reachable")
+                        context.robot.logger?.log("Robot $k not reachable")
                     }
                 }
             }
@@ -45,7 +45,7 @@ class StateElection(context: StateMachineContext): State {
             context.currentState = StateCoordinator(context)
             context.currentState.entry(context)
         } else {
-            println("[${context.robot.id}]: Current coordinator identified as: ${context.robot.currentCoordinator!!.id}. Skipping election.")
+            context.robot.logger?.log("[${context.robot.id}]: Current coordinator identified as: ${context.robot.currentCoordinator!!.id}. Skipping election.")
             context.currentState = StateIdle(context)
             context.currentState.entry(context)
         }

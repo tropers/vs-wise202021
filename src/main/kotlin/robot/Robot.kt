@@ -19,13 +19,15 @@ class Robot(var id: Int) {
     var currentCoordinator: Robot? = null
     var stateMachine: StateMachineContext = StateMachineContext(this) // Use the Lamport Mutex
 
+    var logger: LoggerCaller? = null
+
     // Lock for accessing the participants list and robotCallers
     var participantsLock = ReentrantLock()
 
     // Distributed Lock used for welding
     var distributedMutex: IDistributedMutex = LamportMutex(id) // Use Lamport
 
-    var registerCountdownLatch = CountDownLatch(MINIMUM_ROBOT_COUNT)
+    private var registerCountdownLatch = CountDownLatch(MINIMUM_ROBOT_COUNT)
 
     // Get stubs of robots participating in a welding process
     fun getStubs(participants: List<Int>): List<Stub> {
@@ -57,10 +59,9 @@ class Robot(var id: Int) {
 
             // Sort all robots by weldingcount
             robots = participants.toList().map { it.second } as MutableList<Robot>
-            robots.sortedBy { weldingCount }
         }
 
-        return robots
+        return robots.sortedBy { it.weldingCount }
     }
 
     // Registers the robot in the network
@@ -68,7 +69,7 @@ class Robot(var id: Int) {
         for (port in portRange) {
             if (port != ownPort) {
                 try {
-                    println("[${id}]: Registering at $port")
+                    logger?.log("[${id}]: Registering at $port")
                     val stub = Stub("localhost", port)
                     val registerReq = Message(MessageType.REGISTER_REQUEST, RegisterRequest(id,  "localhost", ownPort))
 
@@ -93,7 +94,7 @@ class Robot(var id: Int) {
                         error("RegisterError: Response has wrong type $registerRes")
                     }
                 } catch (e: IOException) {
-                    println("[$id]: No robot reached at ${port}, skipping...")
+                    logger?.log("[$id]: No robot reached at ${port}, skipping...")
                 } /* If no connection can be made, skip */
             }
         }
@@ -101,14 +102,14 @@ class Robot(var id: Int) {
 
     // TODO: Probably have to change this (parameters not listed in assignment)
     fun welding(stubs: List<Stub>): Boolean {
-        println("[$id]: Preparing to weld...")
+        logger?.log("[$id]: Preparing to weld...")
         // Acquire the distributed mutex
         distributedMutex.acquire(stubs)
-        println("[$id]: welding...")
+        logger?.log("[$id]: welding...")
 
-        Thread.sleep(1000) // TODO: make configurable
+        Thread.sleep(2000) // TODO: make configurable
 
-        if (Random.nextInt(0, 100) >= 0) { // 99% chance // TODO: Put back in error chance
+        if (Random.nextInt(0, 100) >= 1) { // 99% chance // TODO: Put back in error chance
             var ack: Message?
 
             participantsLock.withLock {

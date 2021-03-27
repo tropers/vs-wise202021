@@ -4,6 +4,7 @@ import distributedmutex.lamport.services.RequestResourceService
 import middleware.MessageType
 import middleware.Skeleton
 import middleware.services.*
+import robot.LoggerCaller
 import robot.Robot
 import java.io.IOException
 import java.net.ServerSocket
@@ -29,14 +30,17 @@ fun getFreePort(portRange: IntRange): Int {
 }
 
 fun main(args: Array<String>) {
-    if (args.size < 2) {
-        println("usage: robot [ID] [PORT_RANGE_MIN] [PORT_RANGE_MAX]")
+    if (args.size < 4) {
+        println("usage: robot [ID] [PORT_RANGE_MIN] [PORT_RANGE_MAX] [LOGGER_PORT]")
     } else {
         val robot = Robot(args[0].toInt()) // Create robot object
 
+        robot.logger = LoggerCaller(args[3].toInt())
+
         val portRange = args[1].toInt()..args[2].toInt()
 
-        println("[${args[0]}]: Getting free port for server...")
+        robot.logger?.log("[${args[0]}]: Getting free port for server...")
+
         val port = getFreePort(portRange)
 
         val skeleton = Skeleton(port) // Create server skeleton
@@ -52,14 +56,14 @@ fun main(args: Array<String>) {
         skeleton.registerService(MessageType.REQUEST_RESOURCE, RequestResourceService(robot.distributedMutex as LamportMutex))
         skeleton.registerService(MessageType.RELEASE_RESOURCE, ReleaseResourceService(robot.distributedMutex as LamportMutex))
 
-        println("[${args[0]}]: Starting up server on $port")
+        robot.logger?.log("[${args[0]}]: Starting up server on $port")
         // Run skeleton server
         val server = Thread(skeleton)
         server.start()
 
         Thread.sleep(1000)
 
-        println("[${args[0]}]: Registering ${robot.id} in the system...")
+        robot.logger?.log("[${args[0]}]: Registering ${robot.id} in the system...")
 //        // Register robot in network
 //        robot.register(port, portRange)
 
@@ -76,10 +80,10 @@ fun main(args: Array<String>) {
 //            robot.registerCountdownLatch.await()
         }
 
-        println("[${robot.id}]: Registered participants: ")
+        robot.logger?.log("[${robot.id}]: Registered participants: ")
         robot.participants.forEach { println(it.key) }
 
-        println("[${args[0]}]: Enough robots in system, starting experiment!")
+        robot.logger?.log("[${args[0]}]: Enough robots in system, starting experiment!")
         robot.stateMachine.currentState.election(robot.stateMachine)
     }
 }

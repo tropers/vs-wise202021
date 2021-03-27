@@ -4,13 +4,17 @@ import robot.statemachine.StateMachineContext
 
 class StateCoordinator(context: StateMachineContext): State {
     init {
-        println("[${context.robot.id}]: Entering ${this.javaClass.name}")
+        context.robot.logger?.log("[${context.robot.id}]: Entering ${this.javaClass.name}")
     }
 
     // The coordinator chooses the cycle for welding
     override fun entry(context: StateMachineContext) {
         // Get welding count of every robot
         val robots = context.robot.getSortedRobotList()
+
+        println("[${context.robot.id}]: WeldingCounts:")
+        robots.forEach { println(it.weldingCount) }
+        println(context.robot.weldingCount)
 
         // Select robots with smallest welding count
         // and add self to cycle

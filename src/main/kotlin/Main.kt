@@ -6,10 +6,7 @@ import middleware.Skeleton
 import middleware.services.*
 import robot.Robot
 import java.io.IOException
-import java.net.Socket
 import java.net.ServerSocket
-
-
 
 
 fun portAvailable(port: Int): Boolean {
@@ -47,6 +44,7 @@ fun main(args: Array<String>) {
         skeleton.registerService(MessageType.GET_WELDING_COUNT, GetWeldingCountService(robot))
         skeleton.registerService(MessageType.REGISTER_REQUEST, RegisterService(robot))
         skeleton.registerService(MessageType.COORDINATOR, SetCoordinatorService(robot))
+        skeleton.registerService(MessageType.WELDING_READY, WeldingReadyService(robot))
         skeleton.registerService(MessageType.WELDING_DONE, WeldingDoneService(robot))
         skeleton.registerService(MessageType.WELDING, WeldingService(robot))
         skeleton.registerService(MessageType.ROBOT_FAILURE, RobotFailureService(robot))
@@ -59,14 +57,27 @@ fun main(args: Array<String>) {
         val server = Thread(skeleton)
         server.start()
 
+        Thread.sleep(1000)
+
         println("[${args[0]}]: Registering ${robot.id} in the system...")
-        // Register robot in network
+//        // Register robot in network
+//        robot.register(port, portRange)
+
+        var previousRegistered = robot.participants.size
+
         robot.register(port, portRange)
 
-        while (robot.participants.size < 2) {
-            println(robot.participants.size)
-            Thread.sleep(1000)
+        while (previousRegistered != robot.participants.size || previousRegistered < 1) {
+            // Register robot in network
+            robot.register(port, portRange)
+            previousRegistered = robot.participants.size
+
+            // Wait for at least two other robots
+//            robot.registerCountdownLatch.await()
         }
+
+        println("[${robot.id}]: Registered participants: ")
+        robot.participants.forEach { println(it.key) }
 
         println("[${args[0]}]: Enough robots in system, starting experiment!")
         robot.stateMachine.currentState.election(robot.stateMachine)

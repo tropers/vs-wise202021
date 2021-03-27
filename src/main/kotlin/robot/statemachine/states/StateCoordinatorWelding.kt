@@ -1,5 +1,8 @@
 package robot.statemachine.states
 
+import middleware.MessageType
+import robot.Robot
+import robot.RobotCaller
 import robot.statemachine.StateMachineContext
 import robot.statemachine.WELDING_ROBOTS_AMOUNT
 import java.util.concurrent.CountDownLatch
@@ -16,9 +19,19 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
 
         val stubs = context.robot.getStubs(cycle)
 
+        // Wait for other participants to be ready to weld
+        for (s in stubs) {
+            if (s is RobotCaller) {
+                var ready = s.weldingReady()
+                while (ready.type == MessageType.WELDING_NOT_READY_ACK)
+                    ready = s.weldingReady()
+            }
+        }
+
         // Call other participants to weld
-        for ((_, v) in context.robot.robotCallers) {
-            v.welding(cycle)
+        for (s in stubs) {
+            if (s is RobotCaller)
+                s.welding(cycle)
         }
 
         // Also weld

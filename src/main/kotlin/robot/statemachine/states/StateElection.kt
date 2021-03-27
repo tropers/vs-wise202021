@@ -14,32 +14,41 @@ class StateElection(context: StateMachineContext): State {
     }
 
     override fun entry(context: StateMachineContext) {
-        // Bully-Algorithm for electing the coordinator
-        // Send election message to all higherups
-        for ((k, v) in context.robot.participants) {
-            if (context.robot.id < k) {
-                try {
-                    val m = context.robot.robotCallers[k]?.election()
-                    if (m is Message && m.contents is String && m.contents == "OK") {
-                        context.currentState = StateIdle(context)
-                        context.currentState.entry(context)
-                        return // Abort if someone responded (did not win election)
+        // If no coordinator has been elected in the system
+        if (context.robot.currentCoordinator == null) {
+            println("[${context.robot.id}]: No coordinator set in current run, starting election.")
+
+            // Bully-Algorithm for electing the coordinator
+            // Send election message to all higherups
+            for ((k, v) in context.robot.participants) {
+                if (context.robot.id < k) {
+                    try {
+                        val m = context.robot.robotCallers[k]?.election()
+                        if (m is Message && m.contents is String && m.contents == "OK") {
+                            context.currentState = StateIdle(context)
+                            context.currentState.entry(context)
+                            return // Abort if someone responded (did not win election)
+                        }
+                    } catch (e: IOException) {
+                        println("Robot $k not reachable")
                     }
-                } catch (e: IOException) {
-                    println("Robot $k not reachable")
                 }
             }
+
+            context.robot.currentCoordinator = context.robot
+
+            // Send victory message
+            for ((_, v) in context.robot.robotCallers) {
+                v.coordinator(context.robot.id)
+            }
+
+            context.currentState = StateCoordinator(context)
+            context.currentState.entry(context)
+        } else {
+            println("[${context.robot.id}]: Current coordinator identified as: ${context.robot.currentCoordinator!!.id}. Skipping election.")
+            context.currentState = StateIdle(context)
+            context.currentState.entry(context)
         }
-
-        context.robot.currentCoordinator = context.robot
-
-        // Send victory message
-        for ((_, v) in context.robot.robotCallers) {
-            v.coordinator(context.robot.id)
-        }
-
-        context.currentState = StateCoordinator(context)
-        context.currentState.entry(context)
     }
 
     override fun welding(context: StateMachineContext, cycle: List<Int>) {}

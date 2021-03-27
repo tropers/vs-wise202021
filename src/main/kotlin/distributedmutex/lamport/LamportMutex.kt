@@ -56,7 +56,7 @@ class LamportMutex(var id: Int): IDistributedMutex {
     }
 
     override fun acquire(stubs: List<Stub>) {
-        val req = Request(id, System.nanoTime())
+        val req = Request(id, System.currentTimeMillis())
         val msg = Message(MessageType.REQUEST_RESOURCE, req)
 
         addRequest(req)
@@ -85,7 +85,7 @@ class LamportMutex(var id: Int): IDistributedMutex {
     }
 
     override fun release(stubs: List<Stub>) {
-        val req = Request(id, System.nanoTime())
+        val req = Request(id, System.currentTimeMillis())
         val msg = Message(MessageType.RELEASE_RESOURCE, req)
 
         // Remove all requests of self from requests-queue

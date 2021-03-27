@@ -18,6 +18,7 @@ class SetCoordinatorService(private var robot: Robot): Service {
                     robot.stateMachine.currentState.coordinator(robot.stateMachine)
                 }.start()
             } else {
+                println("[${robot.id}]: New coordinator received: $id.")
                 robot.currentCoordinator = robot.participants[id]
             }
         } else {

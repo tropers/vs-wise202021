@@ -2,15 +2,15 @@ package robot
 
 import distributedmutex.IDistributedMutex
 import distributedmutex.lamport.LamportMutex
-import middleware.Message
-import middleware.MessageType
-import middleware.RegisterRequest
-import middleware.Stub
+import middleware.*
 import robot.statemachine.StateMachineContext
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.random.Random
+
+const val MINIMUM_ROBOT_COUNT = 2
 
 class Robot(var id: Int) {
     var weldingCount: Int = 0
@@ -25,8 +25,7 @@ class Robot(var id: Int) {
     // Distributed Lock used for welding
     var distributedMutex: IDistributedMutex = LamportMutex(id) // Use Lamport
 
-    private var weldingLock = ReentrantLock()
-    private var weldingSignal = weldingLock.newCondition()
+    var registerCountdownLatch = CountDownLatch(MINIMUM_ROBOT_COUNT)
 
     // Get stubs of robots participating in a welding process
     fun getStubs(participants: List<Int>): List<Stub> {
@@ -70,22 +69,32 @@ class Robot(var id: Int) {
             if (port != ownPort) {
                 try {
                     println("[${id}]: Registering at $port")
-                    val stub = Stub("localhost", port) // TODO: configurable IP
-                    val registerReq = Message(MessageType.REGISTER_REQUEST, RegisterRequest(id,  "localhost", ownPort)) // TODO: configurable IP?
+                    val stub = Stub("localhost", port)
+                    val registerReq = Message(MessageType.REGISTER_REQUEST, RegisterRequest(id,  "localhost", ownPort))
 
                     val res = stub.call(registerReq)
 
-                    val robotId = res.contents
-                    if (res.type == MessageType.REGISTER_RESPONSE && robotId is Int) {
+                    val registerRes = res.contents
+                    if (res.type == MessageType.REGISTER_RESPONSE && registerRes is RegisterResponse) {
                         participantsLock.withLock {
-                            val robot = Robot(robotId)
-                            participants[robotId] = robot
-                            robotCallers[robotId] = RobotCaller("localhost", port, this)
+                            if (!participants.containsKey(registerRes.id)) {
+                                val robot = Robot(registerRes.id)
+                                participants[registerRes.id] = robot
+                                robotCallers[registerRes.id] = RobotCaller("localhost", port, this)
+                            }
+
+                            if (registerRes.currentCoordinatorId > -1) {
+                                currentCoordinator = participants[registerRes.currentCoordinatorId]
+                            }
                         }
+
+                        registerCountdownLatch.countDown()
                     } else {
-                        error("RegisterError: Response has wrong type $robotId")
+                        error("RegisterError: Response has wrong type $registerRes")
                     }
-                } catch (e: IOException) {} /* If no connection can be made, skip */
+                } catch (e: IOException) {
+                    println("[$id]: No robot reached at ${port}, skipping...")
+                } /* If no connection can be made, skip */
             }
         }
     }
@@ -99,7 +108,7 @@ class Robot(var id: Int) {
 
         Thread.sleep(1000) // TODO: make configurable
 
-        if (Random.nextInt(0, 100) > 1) { // 99% chance
+        if (Random.nextInt(0, 100) >= 0) { // 99% chance // TODO: Put back in error chance
             var ack: Message?
 
             participantsLock.withLock {

@@ -25,6 +25,11 @@ class RobotCaller(
         return call(req)
     }
 
+    fun weldingReady(): Message {
+        val req = Message(MessageType.WELDING_READY, 0)
+        return call(req)
+    }
+
     fun welding(participants: List<Int>): Message {
         val req = Message(MessageType.WELDING, participants)
         return call(req)

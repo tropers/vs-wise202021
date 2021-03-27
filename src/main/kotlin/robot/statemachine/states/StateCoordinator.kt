@@ -1,8 +1,6 @@
 package robot.statemachine.states
 
 import robot.statemachine.StateMachineContext
-import java.util.concurrent.TimeUnit
-import kotlin.concurrent.withLock
 
 class StateCoordinator(context: StateMachineContext): State {
     init {

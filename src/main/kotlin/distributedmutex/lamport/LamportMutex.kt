@@ -65,16 +65,8 @@ class LamportMutex(var id: Int): IDistributedMutex {
         for (s in stubs) {
             val res = s.call(msg)
 
-            if (res.type != MessageType.REQUEST_RESOURCE_RESPONSE) {
+            if (res.type != MessageType.REQUEST_RESPONSE_ACK) {
                 error("LamportMutex: Wrong message type received ${res.type}")
-            }
-
-            // Add response from other participants to requests-queue
-            val resContent = res.contents
-            if (resContent is Request) {
-//                addRequest(resContent) // TODO: Fix up this area (handle ACK properly)
-            } else {
-                error("LamportMutex: Content of response $res is not Request type")
             }
         }
 

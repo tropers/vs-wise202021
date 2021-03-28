@@ -109,7 +109,7 @@ class Robot(var id: Int) {
 
         Thread.sleep(2000) // TODO: make configurable
 
-        if (Random.nextInt(0, 100) >= 1) { // 99% chance // TODO: Put back in error chance
+        if (Random.nextInt(0, 100) >= 1) { // 99% chance
             var ack: Message?
 
             participantsLock.withLock {
@@ -122,7 +122,6 @@ class Robot(var id: Int) {
             }
 
             if (ack?.type != MessageType.ACK) {
-                // TODO: What to do with mutex in error state (possibly release like below)
                 distributedMutex.release(stubs)
                 return false
             } else {

@@ -15,10 +15,6 @@ class LamportMutex(var id: Int): IDistributedMutex {
     private val requestListLock = ReentrantLock()
     private val requestListLockCondition = requestListLock.newCondition()
 
-    // Lock used for waiting
-    private val acquireLock = ReentrantLock()
-    private val acquireLockCondition = acquireLock.newCondition()
-
     fun addRequest(req: Request) {
         requestListLock.withLock {
             requestList.add(req)

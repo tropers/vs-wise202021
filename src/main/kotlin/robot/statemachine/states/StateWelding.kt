@@ -16,7 +16,6 @@ class StateWelding(context: StateMachineContext, private var cycle: List<Int>): 
             context.currentState = StateIdle(context)
             context.currentState.entry(context)
         } else {
-            context.robot.logger?.log("[${context.robot.id}]: Robot failed after welding!")
             context.currentState = StateError(context)
             context.currentState.entry(context)
         }
@@ -26,7 +25,10 @@ class StateWelding(context: StateMachineContext, private var cycle: List<Int>): 
 
     override fun election(context: StateMachineContext) {}
 
-    override fun coordinator(context: StateMachineContext) {}
+    override fun coordinator(context: StateMachineContext) {
+        context.currentState = StateCoordinator(context)
+        context.currentState.entry(context)
+    }
 
     override fun systemFailure(context: StateMachineContext) {
         context.currentState = StateError(context)

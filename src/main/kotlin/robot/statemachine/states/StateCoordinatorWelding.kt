@@ -34,13 +34,13 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
                 s.welding(cycle)
         }
 
-        var weldingSuccessful: Boolean?
+        var weldingSuccessful: Boolean = true
         // Also weld
         Thread {
             weldingSuccessful = context.robot.welding(stubs)
         }.start()
 
-        if (!context.weldingCountDownLatch.await(1200, TimeUnit.MILLISECONDS)) { // TODO: make configurable
+        if (!context.weldingCountDownLatch.await(600, TimeUnit.MILLISECONDS)) { // TODO: make configurable
             context.robot.logger?.log("[${context.robot.id}]: Cycle time exceeded!")
             context.currentState = StateError(context)
             context.currentState.entry(context)
@@ -64,8 +64,13 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
                 }
             }
 
-            context.currentState = StateIdle(context)
-            context.currentState.entry(context)
+            if (weldingSuccessful) {
+                context.currentState = StateIdle(context)
+                context.currentState.entry(context)
+            } else {
+                context.currentState = StateError(context)
+                context.currentState.entry(context)
+            }
         }
     }
 

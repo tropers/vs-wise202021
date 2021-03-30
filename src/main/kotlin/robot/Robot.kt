@@ -109,7 +109,7 @@ class Robot(var id: Int) {
         logger?.log("[$id]: welding...")
         setStatus(STATUS_WORKING)
 
-        Thread.sleep(200) // TODO: make configurable
+        Thread.sleep(150) // TODO: make configurable
 
         var ack: Message?
 
@@ -143,6 +143,7 @@ class Robot(var id: Int) {
             setStatus(STATUS_OK)
             successful = true
         } else {
+            logger?.log("[${id}]: Robot failed after welding!")
             setStatus(STATUS_NOK)
             successful = false
         }

@@ -18,15 +18,19 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
         context.weldingCountDownLatch = CountDownLatch(WELDING_ROBOTS_AMOUNT)
 
         val stubs = context.robot.getStubs(cycle)
-
         // Wait for other participants to be ready to weld
         for (s in stubs) {
             if (s is RobotCaller) {
-                var ready = s.weldingReady()
-                while (ready.type == MessageType.WELDING_NOT_READY_ACK)
-                    ready = s.weldingReady()
+                val ready = s.weldingReady()
+                if (ready.type == MessageType.WELDING_NOT_READY_ACK) { // If not weld ready, get new cycle to check if
+                    context.currentState = StateCoordinator(context)   // robot is actually available anymore
+                    context.currentState.entry(context)
+                    return
+                }
             }
         }
+
+        val cycleStartTime = System.currentTimeMillis()
 
         // Call other participants to weld
         for (s in stubs) {
@@ -40,11 +44,14 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
             weldingSuccessful = context.robot.welding(stubs)
         }.start()
 
-        if (!context.weldingCountDownLatch.await(600, TimeUnit.MILLISECONDS)) { // TODO: make configurable
+        if (!context.weldingCountDownLatch.await(800, TimeUnit.MILLISECONDS)) { // TODO: make configurable
             context.robot.logger?.log("[${context.robot.id}]: Cycle time exceeded!")
             context.currentState = StateError(context)
             context.currentState.entry(context)
         } else {
+            val cycleEndTime = System.currentTimeMillis()
+            context.robot.logger?.log("[${context.robot.id}]: Cycle at welding count: ${context.robot.weldingCount} finished with time: ${cycleEndTime - cycleStartTime}")
+
             context.robot.logger?.log("[${context.robot.id}]: Choosing new coordinator...")
             // Choose new coordinator
             val robots = context.robot.getSortedRobotList()

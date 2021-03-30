@@ -108,7 +108,7 @@ class Robot(var id: Int) {
         // Acquire the distributed mutex
         distributedMutex.acquire(stubs)
         logger?.log("[$id]: welding...")
-        robotStatus = STATUS_WORKING
+        setStatus(STATUS_WORKING)
 
         Thread.sleep(2000) // TODO: make configurable
 

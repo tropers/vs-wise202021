@@ -21,12 +21,6 @@ class LamportMutex(var id: Int): IDistributedMutex {
         }
     }
 
-    private fun removeRequest(req: Request) {
-        requestListLock.withLock {
-            requestList.remove(req)
-        }
-    }
-
     fun removeRequests(id: Int) {
         requestListLock.withLock {
             requestList.removeAll { it.id == id}

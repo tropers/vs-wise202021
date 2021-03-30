@@ -12,6 +12,13 @@ class StateCoordinator(context: StateMachineContext): State {
         // Get welding count of every robot
         val robots = context.robot.getSortedRobotList()
 
+        if (robots.size < 2) {
+            context.robot.logger?.log("[${context.robot.id}]: Not enough robots available for cycle, going into system error")
+            context.currentState = StateError(context)
+            context.currentState.entry(context)
+            return
+        }
+
         println("[${context.robot.id}]: WeldingCounts:")
         robots.forEach { println(it.weldingCount) }
         println(context.robot.weldingCount)

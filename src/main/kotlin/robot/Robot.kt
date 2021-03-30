@@ -5,7 +5,6 @@ import distributedmutex.lamport.LamportMutex
 import middleware.*
 import robot.statemachine.StateMachineContext
 import java.io.IOException
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.random.Random
@@ -110,37 +109,45 @@ class Robot(var id: Int) {
         logger?.log("[$id]: welding...")
         setStatus(STATUS_WORKING)
 
-        Thread.sleep(2000) // TODO: make configurable
+        Thread.sleep(200) // TODO: make configurable
+
+        var ack: Message?
+
+        participantsLock.withLock {
+            if (currentCoordinator?.id == id) {
+                ack = Message(MessageType.ACK, "Coordinator called itself")
+                stateMachine.weldingCountDownLatch.countDown()
+            } else {
+                ack = robotCallers[currentCoordinator?.id]?.weldingDone()
+            }
+        }
+
+        var successful = true
+
+        if (ack?.type != MessageType.ACK) {
+            distributedMutex.release(stubs)
+            setStatus(STATUS_NOK)
+            successful = false
+            error("Welding: Didn't receive ACK message from coordinator")
+        } else {
+            // Increase weldingcount
+            ++weldingCount
+
+            // Release the distributed mutex
+            distributedMutex.release(stubs)
+            setStatus(STATUS_OK)
+            successful = true
+        }
 
         if (Random.nextInt(0, 100) >= 1) { // 99% chance
-            var ack: Message?
-
-            participantsLock.withLock {
-                if (currentCoordinator?.id == id) {
-                    ack = Message(MessageType.ACK, "Coordinator called itself")
-                    stateMachine.weldingCountDownLatch.countDown()
-                } else {
-                    ack = robotCallers[currentCoordinator?.id]?.weldingSuccessful()
-                }
-            }
-
-            if (ack?.type != MessageType.ACK) {
-                distributedMutex.release(stubs)
-                setStatus(STATUS_NOK)
-                return false
-            } else {
-                // Increase weldingcount
-                ++weldingCount
-
-                // Release the distributed mutex
-                distributedMutex.release(stubs)
-                setStatus(STATUS_OK)
-                return true
-            }
+            setStatus(STATUS_OK)
+            successful = true
         } else {
             setStatus(STATUS_NOK)
-            return false
+            successful = false
         }
+
+        return successful
     }
 
     fun setStatus(status: Int) {

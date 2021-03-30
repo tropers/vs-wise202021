@@ -40,7 +40,8 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
             weldingSuccessful = context.robot.welding(stubs)
         }.start()
 
-        if (!context.weldingCountDownLatch.await(8, TimeUnit.SECONDS)) { // TODO: make configurable
+        if (!context.weldingCountDownLatch.await(1200, TimeUnit.MILLISECONDS)) { // TODO: make configurable
+            context.robot.logger?.log("[${context.robot.id}]: Cycle time exceeded!")
             context.currentState = StateError(context)
             context.currentState.entry(context)
         } else {

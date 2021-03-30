@@ -16,13 +16,7 @@ class StateWelding(context: StateMachineContext, private var cycle: List<Int>): 
             context.currentState = StateIdle(context)
             context.currentState.entry(context)
         } else {
-            // If welding was not successful, tell other participants
-            context.robot.participantsLock.withLock {
-                for ((_, v) in context.robot.robotCallers) {
-                    v.robotFailure()
-                }
-            }
-
+            context.robot.logger?.log("[${context.robot.id}]: Robot failed after welding!")
             context.currentState = StateError(context)
             context.currentState.entry(context)
         }

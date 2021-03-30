@@ -41,11 +41,6 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
         }.start()
 
         if (!context.weldingCountDownLatch.await(8, TimeUnit.SECONDS)) { // TODO: make configurable
-            context.robot.participantsLock.withLock {
-                for ((_, v) in context.robot.robotCallers) {
-                    v.robotFailure()
-                }
-            }
             context.currentState = StateError(context)
             context.currentState.entry(context)
         } else {

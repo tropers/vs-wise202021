@@ -126,7 +126,7 @@ class Robot(var id: Int) {
 
             if (ack?.type != MessageType.ACK) {
                 distributedMutex.release(stubs)
-                robotStatus = STATUS_NOK
+                setStatus(STATUS_NOK)
                 return false
             } else {
                 // Increase weldingcount
@@ -134,11 +134,11 @@ class Robot(var id: Int) {
 
                 // Release the distributed mutex
                 distributedMutex.release(stubs)
-                robotStatus = STATUS_OK
+                setStatus(STATUS_OK)
                 return true
             }
         } else {
-            robotStatus = STATUS_NOK
+            setStatus(STATUS_NOK)
             return false
         }
     }

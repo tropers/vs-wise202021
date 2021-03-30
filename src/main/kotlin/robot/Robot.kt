@@ -103,7 +103,6 @@ class Robot(var id: Int) {
         }
     }
 
-    // TODO: Probably have to change this (parameters not listed in assignment)
     fun welding(stubs: List<Stub>): Boolean {
         logger?.log("[$id]: Preparing to weld...")
         // Acquire the distributed mutex

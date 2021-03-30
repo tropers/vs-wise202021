@@ -61,23 +61,20 @@ fun main(args: Array<String>) {
         val server = Thread(skeleton)
         server.start()
 
-        Thread.sleep(1000)
+        Thread.sleep(1000) // Wait for server to boot up correctly
 
         robot.logger?.log("[${args[0]}]: Registering ${robot.id} in the system...")
-//        // Register robot in network
-//        robot.register(port, portRange)
 
         var previousRegistered = robot.participants.size
 
         robot.register(port, portRange)
 
+        // As long as new robots are found or no robots have been found yet
+        // Try to register in specified port range
         while (previousRegistered != robot.participants.size || previousRegistered < 1) {
             // Register robot in network
             robot.register(port, portRange)
             previousRegistered = robot.participants.size
-
-            // Wait for at least two other robots
-//            robot.registerCountdownLatch.await()
         }
 
         robot.logger?.log("[${robot.id}]: Registered participants: ")

@@ -16,6 +16,14 @@ class RobotFailureService(private var robot: Robot): Service {
                 robot.robotCallers.remove(m.contents)
             }
 
+            if (robotId == robot.currentCoordinator?.id) { // Coordinator failed, start election
+                robot.currentCoordinator = null
+
+                Thread {
+                    robot.stateMachine.currentState.election(robot.stateMachine)
+                }.start()
+            }
+
             return Message(MessageType.ACK, "OK")
         } else {
             error("RobotFailureService: Wrong message received $m")

@@ -12,12 +12,19 @@ import kotlin.random.Random
 
 const val MINIMUM_ROBOT_COUNT = 2
 
+
+/* Robot Status */
+const val STATUS_WORKING = 1
+const val STATUS_OK = 0
+const val STATUS_NOK = -1
+
 class Robot(var id: Int) {
     var weldingCount: Int = 0
     var participants: MutableMap<Int, Robot> = mutableMapOf()
     var robotCallers: MutableMap<Int, RobotCaller> = mutableMapOf()
     var currentCoordinator: Robot? = null
     var stateMachine: StateMachineContext = StateMachineContext(this) // Use the Lamport Mutex
+    var robotStatus: Int = 0
 
     var logger: LoggerCaller? = null
 
@@ -26,8 +33,6 @@ class Robot(var id: Int) {
 
     // Distributed Lock used for welding
     var distributedMutex: IDistributedMutex = LamportMutex(id) // Use Lamport
-
-    private var registerCountdownLatch = CountDownLatch(MINIMUM_ROBOT_COUNT)
 
     // Get stubs of robots participating in a welding process
     fun getStubs(participants: List<Int>): List<Stub> {
@@ -88,8 +93,6 @@ class Robot(var id: Int) {
                                 currentCoordinator = participants[registerRes.currentCoordinatorId]
                             }
                         }
-
-                        registerCountdownLatch.countDown()
                     } else {
                         error("RegisterError: Response has wrong type $registerRes")
                     }
@@ -106,6 +109,7 @@ class Robot(var id: Int) {
         // Acquire the distributed mutex
         distributedMutex.acquire(stubs)
         logger?.log("[$id]: welding...")
+        robotStatus = STATUS_WORKING
 
         Thread.sleep(2000) // TODO: make configurable
 
@@ -123,6 +127,7 @@ class Robot(var id: Int) {
 
             if (ack?.type != MessageType.ACK) {
                 distributedMutex.release(stubs)
+                robotStatus = STATUS_NOK
                 return false
             } else {
                 // Increase weldingcount
@@ -130,12 +135,16 @@ class Robot(var id: Int) {
 
                 // Release the distributed mutex
                 distributedMutex.release(stubs)
+                robotStatus = STATUS_OK
                 return true
             }
         } else {
+            robotStatus = STATUS_NOK
             return false
         }
     }
 
-    fun setStatus() {} // TODO
+    fun setStatus(status: Int) {
+        robotStatus = status
+    }
 }

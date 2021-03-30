@@ -34,14 +34,15 @@ class StateCoordinatorWelding(context: StateMachineContext, private var cycle: L
                 s.welding(cycle)
         }
 
+        var weldingSuccessful: Boolean?
         // Also weld
         Thread {
-            context.robot.welding(stubs)
+            weldingSuccessful = context.robot.welding(stubs)
         }.start()
 
         if (!context.weldingCountDownLatch.await(8, TimeUnit.SECONDS)) { // TODO: make configurable
             context.robot.participantsLock.withLock {
-                for ((k, v) in context.robot.robotCallers) {
+                for ((_, v) in context.robot.robotCallers) {
                     v.robotFailure()
                 }
             }

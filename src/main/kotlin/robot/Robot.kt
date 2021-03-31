@@ -139,7 +139,7 @@ class Robot(var id: Int) {
             successful = true
         }
 
-        if (Random.nextInt(0, 100) >= 0) { // 99% chance
+        if (Random.nextInt(0, 100) >= 1) { // 99% chance
             setStatus(STATUS_OK)
             successful = true
         } else {

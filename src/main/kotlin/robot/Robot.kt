@@ -109,7 +109,7 @@ class Robot(var id: Int) {
         logger?.log("[$id]: welding...")
         setStatus(STATUS_WORKING)
 
-        Thread.sleep(150) // TODO: make configurable
+        Thread.sleep(Experiment.weldingTime)
 
         var ack: Message?
 
@@ -122,7 +122,7 @@ class Robot(var id: Int) {
             }
         }
 
-        var successful = true
+        var successful: Boolean
 
         if (ack?.type != MessageType.ACK) {
             distributedMutex.release(stubs)
@@ -139,7 +139,7 @@ class Robot(var id: Int) {
             successful = true
         }
 
-        if (Random.nextInt(0, 100) >= 1) { // 99% chance
+        if (Random.nextInt(0, 100) >= 0) { // 99% chance
             setStatus(STATUS_OK)
             successful = true
         } else {
